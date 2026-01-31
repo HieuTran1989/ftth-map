@@ -1,105 +1,87 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Bản đồ hiệu suất FTTH GPON</title>
+  <meta charset="UTF-8" />
+  <title>Bản đồ FTTH GPON</title>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Search -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <!-- Leaflet Control Geocoder -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+  />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<style>
-html, body, #map {
-  height: 100%;
-  margin: 0;
-}
-
-.legend {
-  background: white;
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 18px;
-}
-.legend i {
-  width: 14px;
-  height: 14px;
-  float: left;
-  margin-right: 6px;
-  opacity: 0.8;
-}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    .legend {
+      background: white;
+      padding: 10px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .legend span {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+    }
+  </style>
 </head>
 
 <body>
 <div id="map"></div>
 
 <script>
-// =====================
-// Khởi tạo map
-// =====================
-const map = L.map("map").setView([10.78, 106.68], 12);
+/* ================== MAP INIT ================== */
+const map = L.map("map").setView([10.762622, 106.660172], 13);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap"
+  attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-// =====================
-// Search địa chỉ / tọa độ
-// =====================
+/* ================== SEARCH ================== */
 L.Control.geocoder({
   defaultMarkGeocode: true
 })
-.on("markgeocode", function(e) {
-  const c = e.geocode.center;
-  L.marker(c).addTo(map)
-    .bindPopup("📍 Vị trí tìm kiếm")
-    .openPopup();
-  map.setView(c, 16);
-})
-.addTo(map);
+  .on("markgeocode", function (e) {
+    const center = e.geocode.center;
+    L.marker(center)
+      .addTo(map)
+      .bindPopup("📍 Vị trí khách hàng")
+      .openPopup();
+    map.setView(center, 15);
+  })
+  .addTo(map);
 
-// =====================
-// Hàm màu theo hiệu suất
-// =====================
+/* ================== COLOR LOGIC ================== */
 function getColor(eff) {
-  if (eff >= 100) return "black";
-  if (eff > 80) return "red";
-  if (eff > 50) return "orange";
-  return "green";
+  if (eff < 50) return "green";
+  if (eff < 80) return "yellow";
+  if (eff < 100) return "red";
+  return "black";
 }
 
-// =====================
-// Legend
-// =====================
-const legend = L.control({ position: "bottomright" });
-legend.onAdd = function () {
-  const div = L.DomUtil.create("div", "legend");
-  div.innerHTML = `
-    <b>Hiệu suất sử dụng</b><br>
-    <i style="background:green"></i> &lt; 50%<br>
-    <i style="background:orange"></i> 50 – 80%<br>
-    <i style="background:red"></i> 80 – 100%<br>
-    <i style="background:black"></i> ≥ 100%
-  `;
-  return div;
-};
-legend.addTo(map);
+/* ================== GOOGLE SHEET ================== */
+const sheetUrl =
+  "https://docs.google.com/spreadsheets/d/1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq/gviz/tq?" +
+  "sheet=Danh%20sách%20tập%20điểm%20S2&tq=select%20*";
 
-// =====================
-// Google Sheet (GVIZ)
-// =====================
-const SHEET_ID = "1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq";
-const SHEET_NAME = "Danh sách tập điểm S2";
-
-const sheetURL =
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
-  `sheet=${encodeURIComponent(SHEET_NAME)}&tq=select *`;
-
-fetch(sheetURL)
+/* ================== LOAD DATA ================== */
+fetch(sheetUrl)
   .then(res => res.text())
   .then(text => {
     const json = JSON.parse(
@@ -111,32 +93,37 @@ fetch(sheetURL)
 
     const rows = json.table.rows;
 
-    rows.forEach(r => {
-      const name  = r.c[2]?.v;                 // C
-      const total = r.c[3]?.v;                 // D
-      const used  = r.c[4]?.v;                 // E
-      const free  = r.c[5]?.v;                 // F
-      const eff   = parseFloat(r.c[7]?.v);     // H
-      const lat   = parseFloat(r.c[9]?.v);     // J
-      const lng   = parseFloat(r.c[10]?.v);    // K
+    rows.forEach(row => {
+      if (!row.c) return;
 
-      if (isNaN(lat) || isNaN(lng)) return;
+      const name = row.c[2]?.v;
+      const totalPort = row.c[3]?.v;
+      const usedPort = row.c[4]?.v;
+      const freePort = row.c[5]?.v;
 
-      const color = getColor(eff);
+      // Percentage → 0–1 → %
+      const efficiency = row.c[7]?.v * 100;
 
-      L.circle([lat, lng], {
+      const lat = row.c[9]?.v;
+      const lng = row.c[10]?.v;
+
+      if (!lat || !lng) return;
+
+      const color = getColor(efficiency);
+
+      const circle = L.circle([lat, lng], {
         radius: 300,
         color: color,
         fillColor: color,
         fillOpacity: 0.4
-      })
-      .addTo(map)
-      .bindPopup(`
-        <b>${name}</b><br>
-        Dung lượng port: ${total}<br>
-        Đã dùng: ${used}<br>
-        Còn lại: ${free}<br>
-        Hiệu suất: ${eff}%
+      }).addTo(map);
+
+      circle.bindPopup(`
+        <b>${name}</b><br/>
+        Tổng port: ${totalPort}<br/>
+        Đã dùng: ${usedPort}<br/>
+        Còn lại: ${freePort}<br/>
+        Hiệu suất: ${efficiency.toFixed(1)}%
       `);
     });
   })
@@ -144,6 +131,23 @@ fetch(sheetURL)
     console.error(err);
     alert("❌ Không tải được dữ liệu Google Sheet");
   });
+
+/* ================== LEGEND ================== */
+const legend = L.control({ position: "bottomright" });
+
+legend.onAdd = function () {
+  const div = L.DomUtil.create("div", "legend");
+  div.innerHTML = `
+    <b>Hiệu suất sử dụng</b><br/>
+    <span style="background:green"></span> < 50%<br/>
+    <span style="background:yellow"></span> 50–80%<br/>
+    <span style="background:red"></span> 80–100%<br/>
+    <span style="background:black"></span> ≥ 100%
+  `;
+  return div;
+};
+
+legend.addTo(map);
 </script>
 </body>
 </html>
