@@ -104,6 +104,24 @@
     .suggest-item:hover {
       background: #f0f0f0;
     }
+
+  /* ================= MOBILE / TABLET ================= */
+  @media (max-width: 768px) {
+    .control-box {
+      position: fixed;        /* ghim theo màn hình */
+      left: 50%;
+      bottom: 10px;
+  
+      top: auto;              /* hủy vị trí desktop */
+      transform: translateX(-50%);
+  
+      width: calc(100% - 20px);
+      min-width: unset;
+      max-width: none;
+  
+      border-radius: 12px;
+    }
+  }
     
   </style>
 </head>
@@ -445,6 +463,7 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
+
 
 
 
