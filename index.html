@@ -1,164 +1,203 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Bản đồ hiệu suất FTTH GPON</title>
+<meta charset="utf-8" />
+<title>Bản đồ kiểm soát hiệu suất FTTH GPON</title>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Search -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css">
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
 <style>
-html, body, #map {
-  height: 100%;
-  margin: 0;
-}
+body { margin:0; font-family: Arial, sans-serif; }
+#container { display: flex; height: 100vh; }
+#map { flex: 3; }
+#side { flex: 2; padding: 10px; overflow-y: auto; border-left: 1px solid #ccc; }
 
-.legend {
-  background: white;
-  padding: 8px 10px;
-  font-size: 13px;
-  line-height: 18px;
-}
-.legend i {
+h3 { margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+th { background: #eee; }
+
+.legend div { margin-bottom: 4px; }
+.legend span {
+  display: inline-block;
   width: 14px;
   height: 14px;
-  float: left;
   margin-right: 6px;
-  opacity: 0.8;
+  vertical-align: middle;
+}
+
+.highlight {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
 }
 </style>
 </head>
 
 <body>
-<div id="map"></div>
+<div id="container">
+  <div id="map"></div>
+
+  <div id="side">
+    <h3>🔎 Nhập vị trí tìm kiếm</h3>
+    <input id="searchInput" style="width:100%" placeholder="Địa chỉ hoặc lat,long" />
+    <button onclick="searchLocation()">Tìm kiếm</button>
+
+    <h3>🎯 Lọc theo hiệu suất</h3>
+    <select id="filter" onchange="applyFilter()">
+      <option value="all">Tất cả</option>
+      <option value="lt20">< 20%</option>
+      <option value="20_50">20–50%</option>
+      <option value="50_80">50–80%</option>
+      <option value="80_100">80–<100%</option>
+      <option value="gte100">≥100%</option>
+    </select>
+
+    <h3>⚙️ Ưu tiên nâng cấp (Kỹ thuật)</h3>
+
+    <b>Ưu tiên 1 (≥100%)</b>
+    <table id="p1"><tr><th>Tập điểm</th><th>Hiệu suất</th></tr></table>
+
+    <br/>
+    <b>Ưu tiên 2 (80–<100%)</b>
+    <table id="p2"><tr><th>Tập điểm</th><th>Hiệu suất</th></tr></table>
+  </div>
+</div>
 
 <script>
-// =====================
-// Khởi tạo map
-// =====================
-const map = L.map("map").setView([10.78, 106.68], 12);
+const SHEET_URL =
+"https://docs.google.com/spreadsheets/d/1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq/gviz/tq?tqx=out:csv&sheet=Danh%20sách%20tập%20điểm%20S2";
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap"
-}).addTo(map);
+const map = L.map('map').setView([10.8, 106.7], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// =====================
-// Search địa chỉ / tọa độ KH
-// =====================
-L.Control.geocoder({
-  placeholder: "Nhập địa chỉ hoặc tọa độ (lat,lng)",
-  defaultMarkGeocode: false
-})
-.on("markgeocode", function(e) {
-  const c = e.geocode.center;
+let circles = [];
+let allData = [];
 
-  L.marker(c)
-    .addTo(map)
-    .bindPopup("📍 Vị trí tìm kiếm")
-    .openPopup();
-
-  map.setView(c, 16);
-})
-.addTo(map);
-
-// =====================
-// Hàm xác định màu (đơn vị %)
-// =====================
-function getColor(percent) {
-  if (percent >= 100) return "black";
-  if (percent >= 80)  return "red";
-  if (percent >= 50)  return "orange";
-  return "green";
+function colorByUsage(u) {
+  if (u < 0.2) return 'blue';
+  if (u < 0.5) return 'green';
+  if (u < 0.8) return 'yellow';
+  if (u < 1) return 'red';
+  return 'black';
 }
 
-// =====================
-// Legend
-// =====================
-const legend = L.control({ position: "bottomright" });
-legend.onAdd = function () {
-  const div = L.DomUtil.create("div", "legend");
-  div.innerHTML = `
-    <b>Hiệu suất sử dụng</b><br>
-    <i style="background:green"></i> &lt; 50%<br>
-    <i style="background:orange"></i> 50 – 80%<br>
-    <i style="background:red"></i> 80 – 100%<br>
-    <i style="background:black"></i> ≥ 100%
-  `;
-  return div;
-};
-legend.addTo(map);
+fetch(SHEET_URL)
+.then(r => r.text())
+.then(csv => {
+  const rows = csv.split('\n').slice(1);
+  rows.forEach(r => {
+    const c = r.split(',');
+    if (!c[9] || !c[10]) return;
 
-// =====================
-// Google Sheet (GVIZ)
-// =====================
-const SHEET_ID   = "1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq";
-const SHEET_NAME = "Danh sách tập điểm S2";
+    const usage = parseFloat(c[7]);
+    const obj = {
+      name: c[2],
+      addr: c[8],
+      max: c[3],
+      used: c[4],
+      left: c[5],
+      usage,
+      lat: parseFloat(c[9]),
+      lng: parseFloat(c[10])
+    };
+    allData.push(obj);
 
-const sheetURL =
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
-  `sheet=${encodeURIComponent(SHEET_NAME)}&tq=select *`;
-
-// Bounds để auto zoom
-const bounds = L.latLngBounds([]);
-
-fetch(sheetURL)
-  .then(res => res.text())
-  .then(text => {
-    const json = JSON.parse(
-      text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1)
-    );
-
-    const rows = json.table.rows;
-
-    rows.forEach(r => {
-      const name  = r.c[2]?.v;           // C
-      const total = r.c[3]?.v;           // D
-      const used  = r.c[4]?.v;           // E
-      const free  = r.c[5]?.v;           // F
-
-      // H đang là Percentage (0.5 = 50%)
-      const effRaw = parseFloat(r.c[7]?.v);
-      const effPct = effRaw * 100;
-
-      const lat = parseFloat(r.c[9]?.v); // J
-      const lng = parseFloat(r.c[10]?.v);// K
-
-      if (isNaN(lat) || isNaN(lng) || isNaN(effRaw)) return;
-
-      const color = getColor(effPct);
-
-      L.circle([lat, lng], {
-        radius: 300,
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.4
-      })
-      .addTo(map)
-      .bindPopup(`
-        <b>${name}</b><br>
-        Dung lượng port: ${total}<br>
-        Đã dùng: ${used}<br>
-        Còn lại: ${free}<br>
-        Hiệu suất: ${effPct.toFixed(1)}%
-      `);
-
-      bounds.extend([lat, lng]);
-    });
-
-    // Auto zoom
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40] });
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("❌ Không tải được dữ liệu Google Sheet");
+    const circle = L.circle([obj.lat, obj.lng], {
+      radius: 300,
+      color: colorByUsage(usage),
+      fillColor: colorByUsage(usage),
+      fillOpacity: 0.4
+    })
+    .bindPopup(`
+<b>${obj.name}</b><br/>
+${obj.addr}<br/>
+Port tối đa: ${obj.max}<br/>
+Đã dùng: ${obj.used}<br/>
+Còn lại: ${obj.left}<br/>
+Hiệu suất: ${(usage*100).toFixed(1)}%
+`);
+    circle.addTo(map);
+    circle.data = obj;
+    circles.push(circle);
   });
+
+  const group = L.featureGroup(circles);
+  map.fitBounds(group.getBounds());
+
+  buildTables();
+});
+
+function applyFilter() {
+  const f = document.getElementById('filter').value;
+  circles.forEach(c => {
+    const u = c.data.usage;
+    let show = true;
+    if (f === 'lt20') show = u < 0.2;
+    if (f === '20_50') show = u >=0.2 && u <0.5;
+    if (f === '50_80') show = u >=0.5 && u <0.8;
+    if (f === '80_100') show = u >=0.8 && u <1;
+    if (f === 'gte100') show = u >=1;
+    show ? c.addTo(map) : map.removeLayer(c);
+  });
+}
+
+function buildTables() {
+  allData.forEach(d => {
+    const row = `<tr><td>${d.name}</td><td>${(d.usage*100).toFixed(1)}%</td></tr>`;
+    if (d.usage >= 1) document.getElementById('p1').innerHTML += row;
+    else if (d.usage >= 0.8) document.getElementById('p2').innerHTML += row;
+  });
+}
+
+function distance(a,b,c,d){
+  return map.distance([a,b],[c,d]);
+}
+
+function searchLocation() {
+  const v = document.getElementById('searchInput').value.trim();
+  let latlng;
+
+  if (v.includes(',')) {
+    const p = v.split(',');
+    latlng = [parseFloat(p[0]), parseFloat(p[1])];
+    processSearch(latlng);
+  } else {
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${v}`)
+    .then(r=>r.json())
+    .then(j=>{
+      if (!j[0]) return alert("Không tìm thấy");
+      latlng = [parseFloat(j[0].lat), parseFloat(j[0].lon)];
+      processSearch(latlng);
+    });
+  }
+}
+
+function processSearch(latlng) {
+  map.setView(latlng, 15);
+  L.marker(latlng).addTo(map).bindPopup("📍 Vị trí khách hàng").openPopup();
+
+  circles.forEach(c => c.setStyle({weight:1}));
+  const nearest = circles
+    .map(c => ({c, d: distance(latlng[0],latlng[1],c.data.lat,c.data.lng)}))
+    .sort((a,b)=>a.d-b.d)
+    .slice(0,3);
+
+  nearest.forEach(n => {
+    n.c.setStyle({weight:4});
+    n.c.getElement().classList.add("highlight");
+    n.c.bindPopup(
+      `${n.c.data.name}<br/>
+Khoảng cách: ${n.d.toFixed(0)} m<br/>
+${n.c.data.left > 0 ? "✅ Có thể bán" : "❌ Full port"}`
+    );
+  });
+}
 </script>
 </body>
 </html>
