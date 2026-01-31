@@ -113,7 +113,7 @@
   <div class="panel-title">Tìm tập điểm xung quanh khách hàng</div>
 
 <div class="search-row" style="position:relative">
-  <input id="searchInput" placeholder="Nhập tọa độ / địa chỉ">
+  <input id="searchInput" placeholder="Double click trên map / nhập tọa độ, địa chỉ">
   <button onclick="searchLocation()">Tìm</button>
 
   <!-- GỢI Ý -->
@@ -170,10 +170,10 @@ let clickMarker = null;
 
 /* ================= MAP ================= */
 
-map = L.map('map', { zoomControl: false }).setView([10.8, 106.7], 11);
+map = L.map('map', {zoomControl: false, doubleClickZoom: false}).setView([10.8, 106.7], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
   
-map.on("click", function (e) {
+map.on("dblclick", function (e) {
   const lat = e.latlng.lat.toFixed(6);
   const lng = e.latlng.lng.toFixed(6);
 
@@ -445,4 +445,5 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
+
 
