@@ -126,6 +126,20 @@
     .locate-btn:hover {
       background: #f0f0f0;
     }
+
+    /* ===== Thu gọn control box sau khi tìm ===== */
+    .control-box.collapsed {
+      height: 42px;
+      overflow: hidden;
+      padding-bottom: 4px;
+    }
+    
+    .control-box.collapsed .search-row,
+    .control-box.collapsed select,
+    .control-box.collapsed button,
+    .control-box.collapsed .legend {
+      display: none;
+    }
     
   </style>
 </head>
@@ -394,6 +408,7 @@ function handleCustomer(lat, lng) {
 
     suggestionLayers.push(line);
   });
+   collapseControlBox();
 }
 
 /* ================= EXPORT ================= */
@@ -513,10 +528,16 @@ function locateMe() {
     }
   );
 }
+
+function collapseControlBox() {
+  const box = document.querySelector(".control-box");
+  if (box) box.classList.add("collapsed");
+}
   
 </script>
 
 </body>
 </html>
+
 
 
