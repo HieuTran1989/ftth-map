@@ -113,7 +113,7 @@
   <div class="panel-title">Tìm tập điểm xung quanh khách hàng</div>
 
 <div class="search-row" style="position:relative">
-  <input id="searchInput" placeholder="Nhập tọa độ hoặc địa chỉ">
+  <input id="searchInput" placeholder="Nhập tọa độ / địa chỉ">
   <button onclick="searchLocation()">Tìm</button>
 
   <!-- GỢI Ý -->
@@ -121,7 +121,7 @@
 </div>
 
   <div>
-    <div><b>Hiển thị theo hiệu suất sử dụng</b></div>
+    <div><b>Lọc theo hiệu suất sử dụng tập điểm</b></div>
     <select id="filterSelect" onchange="applyFilter()" style="width:100%">
       <option value="all">Tất cả</option>
       <option value="lt20">&lt; 20%</option>
@@ -356,7 +356,7 @@ function handleCustomer(lat, lng) {
 /* ================= EXPORT ================= */
 
 function exportUpgradeList() {
-  const rows = [['Tên', 'Lat', 'Lng', 'Hiệu suất (%)', 'Ưu tiên']];
+  const rows = [['Tên', 'Lat', 'Long', 'Hiệu suất (%)', 'Ưu tiên']];
   allPoints.forEach(p => {
     if (p.eff >= 0.8) {
       rows.push([
@@ -427,11 +427,3 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
