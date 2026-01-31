@@ -126,13 +126,33 @@
     .locate-btn:hover {
       background: #f0f0f0;
     }
+
+      /* ===== Thu gọn control box ===== */
+    .control-box.collapsed {
+      height: 42px;
+      overflow: hidden;
+      padding-bottom: 4px;
+    }
+    
+    .control-box.collapsed .search-row,
+    .control-box.collapsed select,
+    .control-box.collapsed button,
+    .control-box.collapsed .legend,
+    .control-box.collapsed > div:not(.panel-title) {
+      display: none;
+    }
     
   </style>
 </head>
 <body>
 
-<div class="control-box">
-  <div class="panel-title">Tìm tập điểm xung quanh khách hàng</div>
+<div class="control-box" id="controlBox">
+  <div class="panel-title">
+    Tìm tập điểm xung quanh khách hàng
+    <span id="arrow" onclick="toggleControl()" style="float:right; cursor:pointer">
+      ▲
+    </span>
+  </div>
 
 <div class="search-row" style="position:relative">
   <input id="searchInput" placeholder="dbl-click map/nhập tọa độ, địa chỉ">
@@ -213,6 +233,7 @@ map.on("dblclick", function (e) {
 
   // Gọi xử lý khách hàng
   handleCustomer(+lat, +lng);
+  collapseControlBox();
 });
 
 /* ================= UTILS ================= */
@@ -345,6 +366,7 @@ function searchLocation() {
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
     .then(r => r.json())
     .then(r => r[0] && handleCustomer(+r[0].lat, +r[0].lon));
+  collapseControlBox();
 }
 
 /* ================= CUSTOMER & SUGGEST ================= */
@@ -503,6 +525,7 @@ function locateMe() {
 
       // Gọi logic xử lý khách hàng sẵn có
       handleCustomer(lat, lng);
+      collapseControlBox();
     },
     err => {
       alert("Không lấy được vị trí: " + err.message);
@@ -513,10 +536,30 @@ function locateMe() {
     }
   );
 }
+
+function toggleControl() {
+  const box = document.getElementById("controlBox");
+  const arrow = document.getElementById("arrow");
+
+  box.classList.toggle("collapsed");
+  arrow.textContent = box.classList.contains("collapsed") ? "▼" : "▲";
+}
+
+// Thu gọn tự động
+function collapseControlBox() {
+  const box = document.getElementById("controlBox");
+  const arrow = document.getElementById("arrow");
+
+  if (!box.classList.contains("collapsed")) {
+    box.classList.add("collapsed");
+    arrow.textContent = "▼";
+  }
+}
   
 </script>
 
 </body>
 </html>
+
 
 
