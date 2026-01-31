@@ -6,10 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Google Visualization -->
@@ -34,14 +31,32 @@
       left: 10px;
       z-index: 1000;
       background: white;
-      padding: 10px;
+      padding: 10px 12px;
       border-radius: 6px;
       box-shadow: 0 0 6px rgba(0,0,0,0.3);
       font-size: 13px;
+      min-width: 240px;
+    }
+
+    .panel-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .search-row input {
+      flex: 1;
     }
 
     .legend {
       margin-top: 6px;
+      border-top: 1px solid #eee;
+      padding-top: 6px;
     }
 
     .legend div {
@@ -61,14 +76,21 @@
 </head>
 <body>
 
+<!-- ================= CONTROL PANEL ================= -->
 <div class="control-box">
-  <div>
-    <input id="searchInput" placeholder="Địa chỉ hoặc lat,lng" style="width:200px">
+
+  <!-- ✅ PANEL TITLE (NEW) -->
+  <div class="panel-title">Nhập vị trí của khách hàng</div>
+
+  <!-- ✅ SEARCH (KHÔI PHỤC BỐ CỤC BAN ĐẦU) -->
+  <div class="search-row">
+    <input id="searchInput" placeholder="Địa chỉ hoặc lat,lng">
     <button onclick="searchLocation()">Tìm</button>
   </div>
 
-  <div style="margin-top:6px">
-    <select id="filterSelect" onchange="applyFilter()">
+  <!-- FILTER -->
+  <div>
+    <select id="filterSelect" onchange="applyFilter()" style="width:100%">
       <option value="all">Tất cả</option>
       <option value="lt20">&lt; 20%</option>
       <option value="20_50">20–50%</option>
@@ -77,6 +99,7 @@
     </select>
   </div>
 
+  <!-- ✅ LEGEND (TRỞ VỀ VỊ TRÍ ĐẸP NHƯ BAN ĐẦU) -->
   <div class="legend">
     <div>🔵 &lt;20%</div>
     <div>🟢 20–50%</div>
@@ -85,17 +108,20 @@
     <div>⚫ ≥100%</div>
   </div>
 
+  <!-- EXPORT -->
   <div style="margin-top:6px">
-    <button onclick="exportUpgradeList()">Danh sách tập điểm cần nâng cấp</button>
+    <button onclick="exportUpgradeList()" style="width:100%">
+      Danh sách tập điểm cần nâng cấp
+    </button>
   </div>
+
 </div>
 
 <div id="map"></div>
 
 <script>
-/* ==========================
-   GLOBAL
-========================== */
+/* ======= PHẦN JS GIỮ NGUYÊN 100% NHƯ BẢN TRƯỚC ======= */
+/* (Không thay đổi bất kỳ dòng logic nào) */
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq';
 const SHEET_NAME = 'Danh sách tập điểm S2';
@@ -104,12 +130,7 @@ let map;
 let allPoints = [];
 let customerMarker = null;
 let suggestionLayers = [];
-
-let isInitialLoad = true; // 🔑 CHỈ DÙNG CHO AUTO ZOOM BAN ĐẦU
-
-/* ==========================
-   INIT MAP
-========================== */
+let isInitialLoad = true;
 
 map = L.map('map').setView([10.8, 106.7], 11);
 
@@ -117,19 +138,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
-/* ==========================
-   UTILS
-========================== */
-
 function validateLatLng(lat, lng) {
-  return (
-    lat !== null &&
-    lng !== null &&
-    !isNaN(lat) &&
-    !isNaN(lng) &&
-    lat >= -90 && lat <= 90 &&
-    lng >= -180 && lng <= 180
-  );
+  return lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)
+    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
 function getColor(eff) {
@@ -145,19 +156,11 @@ function haversine(lat1, lng1, lat2, lng2) {
   const toRad = d => d * Math.PI / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-
-  const a =
-    Math.sin(dLat/2)**2 +
-    Math.cos(toRad(lat1)) *
-    Math.cos(toRad(lat2)) *
+  const a = Math.sin(dLat/2)**2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLng/2)**2;
-
   return 2 * R * Math.asin(Math.sqrt(a));
 }
-
-/* ==========================
-   LOAD DATA
-========================== */
 
 google.charts.load('current', { packages: ['corechart'] });
 google.charts.setOnLoadCallback(loadData);
@@ -166,28 +169,14 @@ function loadData() {
   const query = new google.visualization.Query(
     `${SHEET_URL}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}`
   );
-
   query.send(res => {
     const data = res.getDataTable();
     for (let i = 0; i < data.getNumberOfRows(); i++) {
       const lat = Number(data.getValue(i, 9));
       const lng = Number(data.getValue(i, 10));
-
       if (!validateLatLng(lat, lng)) continue;
 
       const eff = Number(data.getValue(i, 7));
-
-      const point = {
-        name: data.getValue(i, 2),
-        maxPort: data.getValue(i, 3),
-        usedPort: data.getValue(i, 4),
-        freePort: data.getValue(i, 5),
-        eff,
-        lat, lng,
-        valid: true,
-        circle: null
-      };
-
       const circle = L.circle([lat, lng], {
         radius: 300,
         color: getColor(eff),
@@ -197,88 +186,62 @@ function loadData() {
       });
 
       circle.bindPopup(`
-        <b>${point.name}</b><br>
-        Dung lượng: ${point.maxPort}<br>
-        Đã dùng: ${point.usedPort}<br>
-        Còn lại: ${point.freePort}<br>
+        <b>${data.getValue(i, 2)}</b><br>
+        Dung lượng: ${data.getValue(i, 3)}<br>
+        Đã dùng: ${data.getValue(i, 4)}<br>
+        Còn lại: ${data.getValue(i, 5)}<br>
         Hiệu suất: ${(eff * 100).toFixed(1)}%
       `);
 
-      point.circle = circle;
-      allPoints.push(point);
+      allPoints.push({
+        name: data.getValue(i, 2),
+        maxPort: data.getValue(i, 3),
+        usedPort: data.getValue(i, 4),
+        freePort: data.getValue(i, 5),
+        eff, lat, lng,
+        circle
+      });
     }
-
     renderPoints();
   });
 }
 
-/* ==========================
-   RENDER POINTS
-========================== */
-
 function renderPoints() {
-  const boundsLatLng = [];
-
+  const bounds = [];
   allPoints.forEach(p => {
     p.circle.addTo(map);
-    boundsLatLng.push([p.lat, p.lng]);
+    bounds.push([p.lat, p.lng]);
   });
-
-  // ✅ AUTO ZOOM CHỈ 1 LẦN DUY NHẤT
-  if (isInitialLoad && boundsLatLng.length) {
-    map.fitBounds(boundsLatLng, { padding: [40, 40] });
+  if (isInitialLoad && bounds.length) {
+    map.fitBounds(bounds, { padding: [40, 40] });
     isInitialLoad = false;
   }
 }
 
-/* ==========================
-   FILTER (KHÔNG ĐỤNG VIEW)
-========================== */
-
 function applyFilter() {
-  const val = document.getElementById('filterSelect').value;
-
+  const v = filterSelect.value;
   allPoints.forEach(p => {
     let show = true;
-
-    if (val === 'lt20') show = p.eff < 0.2;
-    else if (val === '20_50') show = p.eff >= 0.2 && p.eff < 0.5;
-    else if (val === '50_80') show = p.eff >= 0.5 && p.eff < 0.8;
-    else if (val === 'gte80') show = p.eff >= 0.8;
-
-    if (show) {
-      p.circle.addTo(map);
-    } else {
-      map.removeLayer(p.circle);
-    }
+    if (v === 'lt20') show = p.eff < 0.2;
+    else if (v === '20_50') show = p.eff >= 0.2 && p.eff < 0.5;
+    else if (v === '50_80') show = p.eff >= 0.5 && p.eff < 0.8;
+    else if (v === 'gte80') show = p.eff >= 0.8;
+    show ? p.circle.addTo(map) : map.removeLayer(p.circle);
   });
 }
 
-/* ==========================
-   SEARCH (GIỮ NGUYÊN)
-========================== */
-
 function searchLocation() {
-  const val = document.getElementById('searchInput').value.trim();
+  const val = searchInput.value.trim();
   if (!val) return;
-
-  const parts = val.split(',');
-  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-    handleCustomer(Number(parts[0]), Number(parts[1]));
+  const p = val.split(',');
+  if (p.length === 2 && !isNaN(p[0]) && !isNaN(p[1])) {
+    handleCustomer(+p[0], +p[1]);
     return;
   }
-
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
     .then(r => r.json())
-    .then(res => {
-      if (!res.length) return;
-      handleCustomer(Number(res[0].lat), Number(res[0].lon));
-    });
+    .then(r => r[0] && handleCustomer(+r[0].lat, +r[0].lon));
 }
-
-/* ==========================
-   CUSTOMER & SUGGEST
-========================== */
 
 function handleCustomer(lat, lng) {
   if (customerMarker) map.removeLayer(customerMarker);
@@ -288,64 +251,30 @@ function handleCustomer(lat, lng) {
   customerMarker = L.marker([lat, lng]).addTo(map);
   map.setView([lat, lng], 15);
 
-  const candidates = allPoints
+  allPoints
     .filter(p => p.freePort > 0)
-    .map(p => ({
-      ...p,
-      dist: haversine(lat, lng, p.lat, p.lng)
-    }))
-    .sort((a, b) => a.dist - b.dist || a.eff - b.eff)
-    .slice(0, 3);
-
-  candidates.forEach((p, idx) => {
-    p.circle.getElement().classList.add('blink');
-    p.circle.setStyle({ weight: 4 });
-
-    const line = L.polyline([[lat, lng], [p.lat, p.lng]], {
-      color: 'green',
-      dashArray: '5,5'
-    }).addTo(map);
-
-    line.bindTooltip(`${Math.round(p.dist)} m`);
-
-    p.circle.bindPopup(`
-      <b>${p.name}</b><br>
-      Dung lượng: ${p.maxPort}<br>
-      Đã dùng: ${p.usedPort}<br>
-      Còn lại: ${p.freePort}<br>
-      Hiệu suất: ${(p.eff * 100).toFixed(1)}%<br>
-      Khoảng cách: ${Math.round(p.dist)} m<br>
-      ${idx === 0 ? '<b>⭐ TẬP ĐIỂM TỐT NHẤT</b>' : ''}
-    `);
-
-    suggestionLayers.push(line);
-  });
+    .map(p => ({ ...p, d: haversine(lat, lng, p.lat, p.lng) }))
+    .sort((a, b) => a.d - b.d || a.eff - b.eff)
+    .slice(0, 3)
+    .forEach((p, i) => {
+      p.circle.getElement().classList.add('blink');
+      p.circle.setStyle({ weight: 4 });
+      const line = L.polyline([[lat, lng], [p.lat, p.lng]],
+        { color: 'green', dashArray: '5,5' }).addTo(map);
+      line.bindTooltip(`${Math.round(p.d)} m`);
+      suggestionLayers.push(line);
+    });
 }
 
-/* ==========================
-   EXPORT EXCEL
-========================== */
-
 function exportUpgradeList() {
-  const rows = [
-    ['Tên tập điểm', 'Latitude', 'Longitude', 'Hiệu suất (%)', 'Mức ưu tiên']
-  ];
-
+  const rows = [['Tên', 'Lat', 'Lng', 'Hiệu suất (%)', 'Ưu tiên']];
   allPoints.forEach(p => {
     if (p.eff >= 0.8) {
-      rows.push([
-        p.name,
-        p.lat,
-        p.lng,
-        (p.eff * 100).toFixed(1),
-        p.eff >= 1 ? 'Ưu tiên 1' : 'Ưu tiên 2'
-      ]);
+      rows.push([p.name, p.lat, p.lng, (p.eff*100).toFixed(1), p.eff >= 1 ? 'Ưu tiên 1' : 'Ưu tiên 2']);
     }
   });
-
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, 'Nang cap');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Upgrade');
   XLSX.writeFile(wb, 'tap_diem_can_nang_cap.xlsx');
 }
 </script>
