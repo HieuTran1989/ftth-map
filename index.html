@@ -39,7 +39,7 @@ html, body, #map {
 
 <script>
 // =====================
-// Khởi tạo map
+// Khởi tạo map (view tạm, sẽ auto-fit sau)
 // =====================
 const map = L.map("map").setView([10.78, 106.68], 12);
 
@@ -55,9 +55,12 @@ L.Control.geocoder({
 })
 .on("markgeocode", function(e) {
   const c = e.geocode.center;
-  L.marker(c).addTo(map)
+
+  L.marker(c)
+    .addTo(map)
     .bindPopup("📍 Vị trí tìm kiếm")
     .openPopup();
+
   map.setView(c, 16);
 })
 .addTo(map);
@@ -99,6 +102,11 @@ const sheetURL =
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
   `sheet=${encodeURIComponent(SHEET_NAME)}&tq=select *`;
 
+// =====================
+// Bounds để auto zoom
+// =====================
+const bounds = L.latLngBounds([]);
+
 fetch(sheetURL)
   .then(res => res.text())
   .then(text => {
@@ -138,7 +146,19 @@ fetch(sheetURL)
         Còn lại: ${free}<br>
         Hiệu suất: ${eff}%
       `);
+
+      // đưa điểm vào bounds
+      bounds.extend([lat, lng]);
     });
+
+    // =====================
+    // Auto zoom về vùng có vòng tròn
+    // =====================
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, {
+        padding: [40, 40]
+      });
+    }
   })
   .catch(err => {
     console.error(err);
