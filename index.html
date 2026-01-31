@@ -166,11 +166,29 @@ let allPoints = [];
 let customerMarker = null;
 let suggestionLayers = [];
 let isInitialLoad = true;
+let clickMarker = null;
 
 /* ================= MAP ================= */
 
 map = L.map('map', { zoomControl: false }).setView([10.8, 106.7], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  
+map.on("click", function (e) {
+  const lat = e.latlng.lat.toFixed(6);
+  const lng = e.latlng.lng.toFixed(6);
+
+  // Xóa marker cũ nếu có
+  if (clickMarker) map.removeLayer(clickMarker);
+
+  // Ghim marker mới
+  clickMarker = L.marker([lat, lng]).addTo(map);
+
+  // Điền tọa độ vào ô tìm kiếm
+  document.getElementById("searchInput").value = `${lat}, ${lng}`;
+
+  // Gọi xử lý khách hàng
+  handleCustomer(+lat, +lng);
+});
 
 /* ================= UTILS ================= */
 
@@ -427,3 +445,4 @@ document.addEventListener("click", e => {
 
 </body>
 </html>
+
