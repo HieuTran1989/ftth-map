@@ -167,7 +167,8 @@ function drawMap() {
       radius: 300,
       color: getColor(p.rate),
       fillColor: getColor(p.rate),
-      fillOpacity: 0.5
+      fillOpacity: 0.5,
+      weight: 2
     }).addTo(map);
 
     c.basePopup = `
@@ -179,8 +180,8 @@ function drawMap() {
     `;
 
     c.bindPopup(c.basePopup);
-
     p.circle = c;
+
     circles.push(c);
     bounds.push([p.lat, p.lng]);
   });
@@ -210,6 +211,19 @@ function searchLocation() {
 }
 
 function handleCustomer(lat, lng) {
+
+  /* ===== RESET TRẠNG THÁI GỢI Ý CŨ (PHẦN SỬA DUY NHẤT) ===== */
+  allPoints.forEach(p => {
+    if (!p.circle) return;
+
+    const el = p.circle.getElement();
+    if (el) el.classList.remove('blink');
+
+    p.circle.setStyle({ weight: 2 });
+    p.circle.bindPopup(p.circle.basePopup);
+  });
+  /* ===== END RESET ===== */
+
   map.setView([lat, lng], 16);
   const cust = L.marker([lat, lng]).addTo(map);
   suggestionLayers.push(cust);
@@ -231,16 +245,16 @@ function handleCustomer(lat, lng) {
       { color: 'green', dashArray: '5,5' }
     ).addTo(map);
 
-    p.circle.setStyle({
-      weight: isBest ? 4 : 3
-    });
-    p.circle.getElement().classList.add('blink');
+    p.circle.setStyle({ weight: isBest ? 4 : 3 });
+
+    const el = p.circle.getElement();
+    if (el) el.classList.add('blink');
 
     p.circle.bindPopup(
       p.circle.basePopup +
       `<hr>
-       Khoảng cách tới khách hàng: <b>${p.dist.toFixed(0)} m</b><br>
-       ${isBest ? '⭐ <b>TẬP ĐIỂM TỐT NHẤT</b>' : ''}
+        Khoảng cách tới khách hàng: <b>${p.dist.toFixed(0)} m</b><br>
+        ${isBest ? '⭐ <b>TẬP ĐIỂM TỐT NHẤT</b>' : ''}
       `
     );
 
