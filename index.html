@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="utf-8" />
+<meta charset="utf-8">
 <title>Bản đồ hiệu suất FTTH – GPON</title>
 
 <!-- Leaflet -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- Google Visualization -->
@@ -22,48 +19,42 @@ body { margin:0; font-family: Arial, sans-serif; }
 #map { height: 100vh; }
 
 .control-box {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: white;
-  padding: 10px;
-  z-index: 1000;
-  border-radius: 6px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.3);
-  font-size: 13px;
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#fff;
+  padding:10px;
+  z-index:1000;
+  width:260px;
+  border-radius:6px;
+  box-shadow:0 0 6px rgba(0,0,0,.3);
+  font-size:13px;
 }
 
-.control-box input, .control-box select, .control-box button {
-  width: 100%;
-  margin-top: 5px;
+.control-box input,
+.control-box select,
+.control-box button {
+  width:100%;
+  margin-top:6px;
 }
 
-.legend {
-  margin-top: 10px;
-}
-
-.legend div {
-  display: flex;
-  align-items: center;
-  margin-bottom: 3px;
-}
-
+.legend { margin-top:10px; }
+.legend div { display:flex; align-items:center; margin-bottom:4px; }
 .legend span {
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  display: inline-block;
+  width:16px;
+  height:16px;
+  display:inline-block;
+  margin-right:6px;
 }
 </style>
 </head>
 
 <body>
-
 <div id="map"></div>
 
 <div class="control-box">
   <b>Tìm kiếm khách hàng</b>
-  <input id="searchInput" placeholder="Địa chỉ hoặc lat,lng" />
+  <input id="searchInput" placeholder="Địa chỉ hoặc lat,lng">
   <button onclick="searchLocation()">Tìm</button>
 
   <hr>
@@ -92,58 +83,59 @@ body { margin:0; font-family: Arial, sans-serif; }
 </div>
 
 <script>
-google.charts.load('current', { packages:['corechart'] });
+google.charts.load('current', {packages:['corechart']});
 
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1avvicsQgJIm_D66EsPxFE7aUBCfuMdBq/gviz/tq?sheet=Danh%20sách%20tập%20điểm%20S2';
 
-let map = L.map('map').setView([16, 108], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+let map = L.map('map').setView([16,108],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'© OpenStreetMap'
 }).addTo(map);
 
 let allPoints = [];
 let circles = [];
 let customerMarker = null;
+let suggestLines = [];
+let pulseTimers = [];
 
-/* ================= VALIDATE COORD ================= */
-function isValidCoord(lat, lng) {
-  if (lat === null || lng === null) return false;
+/* ================= VALIDATE ================= */
+function isValidCoord(lat,lng){
   lat = Number(lat);
   lng = Number(lng);
-  if (isNaN(lat) || isNaN(lng)) return false;
-  if (lat < -90 || lat > 90) return false;
-  if (lng < -180 || lng > 180) return false;
+  if(isNaN(lat)||isNaN(lng)) return false;
+  if(lat<-90||lat>90) return false;
+  if(lng<-180||lng>180) return false;
   return true;
 }
 
 /* ================= COLOR ================= */
-function getColor(rate) {
-  if (rate >= 1) return '#000';
-  if (rate >= 0.8) return '#e74c3c';
-  if (rate >= 0.5) return '#f1c40f';
-  if (rate >= 0.2) return '#2ecc71';
+function getColor(rate){
+  if(rate>=1) return '#000';
+  if(rate>=0.8) return '#e74c3c';
+  if(rate>=0.5) return '#f1c40f';
+  if(rate>=0.2) return '#2ecc71';
   return '#1e90ff';
 }
 
 /* ================= LOAD DATA ================= */
 google.charts.setOnLoadCallback(loadData);
 
-function loadData() {
-  const query = new google.visualization.Query(SHEET_URL);
-  query.send(res => {
-    const data = res.getDataTable();
-    for (let i = 0; i < data.getNumberOfRows(); i++) {
-      const lat = data.getValue(i, 9);
-      const lng = data.getValue(i, 10);
-      if (!isValidCoord(lat, lng)) continue;
+function loadData(){
+  const q = new google.visualization.Query(SHEET_URL);
+  q.send(res=>{
+    const dt = res.getDataTable();
+    for(let i=0;i<dt.getNumberOfRows();i++){
+      const lat = dt.getValue(i,9);
+      const lng = dt.getValue(i,10);
+      if(!isValidCoord(lat,lng)) continue;
 
       allPoints.push({
-        name: data.getValue(i, 2),
-        maxPort: data.getValue(i, 3),
-        used: data.getValue(i, 4),
-        free: data.getValue(i, 5),
-        rate: data.getValue(i, 7),
+        name: dt.getValue(i,2),
+        maxPort: dt.getValue(i,3),
+        used: dt.getValue(i,4),
+        free: dt.getValue(i,5),
+        rate: dt.getValue(i,7),
         lat: Number(lat),
         lng: Number(lng)
       });
@@ -153,19 +145,18 @@ function loadData() {
 }
 
 /* ================= DRAW MAP ================= */
-function drawMap(points) {
-  circles.forEach(c => map.removeLayer(c));
-  circles = [];
+function drawMap(points){
+  circles.forEach(c=>map.removeLayer(c));
+  circles=[];
+  let bounds=[];
 
-  let bounds = [];
-
-  points.forEach(p => {
-    const c = L.circle([p.lat, p.lng], {
-      radius: 300,
-      color: getColor(p.rate),
-      fillColor: getColor(p.rate),
-      fillOpacity: 0.6,
-      weight: 1
+  points.forEach(p=>{
+    const c=L.circle([p.lat,p.lng],{
+      radius:300,
+      color:getColor(p.rate),
+      fillColor:getColor(p.rate),
+      fillOpacity:0.6,
+      weight:1
     }).addTo(map);
 
     c.bindPopup(`
@@ -176,104 +167,137 @@ function drawMap(points) {
       Hiệu suất: ${(p.rate*100).toFixed(1)}%
     `);
 
-    c.pointData = p;
+    c.pointData=p;
     circles.push(c);
-    bounds.push([p.lat, p.lng]);
+    bounds.push([p.lat,p.lng]);
   });
 
-  if (bounds.length) map.fitBounds(bounds);
+  if(bounds.length) map.fitBounds(bounds);
 }
 
 /* ================= FILTER ================= */
-function applyFilter() {
-  const v = document.getElementById('filterSelect').value;
-  const filtered = allPoints.filter(p => {
-    if (v === 'all') return true;
-    if (v === 'lt20') return p.rate < 0.2;
-    if (v === '20_50') return p.rate >= 0.2 && p.rate < 0.5;
-    if (v === '50_80') return p.rate >= 0.5 && p.rate < 0.8;
-    if (v === 'gte80') return p.rate >= 0.8;
+function applyFilter(){
+  const v=document.getElementById('filterSelect').value;
+  const f=allPoints.filter(p=>{
+    if(v==='all') return true;
+    if(v==='lt20') return p.rate<0.2;
+    if(v==='20_50') return p.rate>=0.2&&p.rate<0.5;
+    if(v==='50_80') return p.rate>=0.5&&p.rate<0.8;
+    if(v==='gte80') return p.rate>=0.8;
   });
-  drawMap(filtered);
+  drawMap(f);
 }
 
 /* ================= HAVERSINE ================= */
-function distance(a, b) {
-  const R = 6371000;
-  const dLat = (b.lat - a.lat) * Math.PI / 180;
-  const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const lat1 = a.lat * Math.PI / 180;
-  const lat2 = b.lat * Math.PI / 180;
-
-  const x = Math.sin(dLat/2)**2 +
-            Math.sin(dLng/2)**2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+function distance(a,b){
+  const R=6371000;
+  const dLat=(b.lat-a.lat)*Math.PI/180;
+  const dLng=(b.lng-a.lng)*Math.PI/180;
+  const la1=a.lat*Math.PI/180;
+  const la2=b.lat*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+
+    Math.sin(dLng/2)**2*Math.cos(la1)*Math.cos(la2);
+  return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
 /* ================= SEARCH ================= */
-function searchLocation() {
-  const q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
+function searchLocation(){
+  const q=document.getElementById('searchInput').value.trim();
+  if(!q) return;
 
-  if (q.includes(',')) {
-    const [lat, lng] = q.split(',').map(Number);
-    zoomToCustomer({lat, lng});
-  } else {
+  if(q.includes(',')){
+    const [lat,lng]=q.split(',').map(Number);
+    zoomToCustomer({lat,lng});
+  }else{
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (!d.length) return;
-        zoomToCustomer({lat: Number(d[0].lat), lng: Number(d[0].lon)});
+      .then(r=>r.json())
+      .then(d=>{
+        if(!d.length) return;
+        zoomToCustomer({lat:Number(d[0].lat),lng:Number(d[0].lon)});
       });
   }
 }
 
-function zoomToCustomer(pos) {
-  if (customerMarker) map.removeLayer(customerMarker);
-  customerMarker = L.marker([pos.lat, pos.lng]).addTo(map);
-  map.setView([pos.lat, pos.lng], 16);
+function zoomToCustomer(pos){
+  if(customerMarker) map.removeLayer(customerMarker);
+  customerMarker=L.marker([pos.lat,pos.lng]).addTo(map);
+  map.setView([pos.lat,pos.lng],16);
   suggestPoints(pos);
 }
 
-/* ================= SUGGEST ================= */
-function suggestPoints(pos) {
-  circles.forEach(c => c.setStyle({weight:1}));
+/* ================= EFFECT CLEAN ================= */
+function clearSuggestEffects(){
+  suggestLines.forEach(l=>map.removeLayer(l));
+  suggestLines=[];
+  pulseTimers.forEach(t=>clearInterval(t));
+  pulseTimers=[];
+  circles.forEach(c=>{
+    c.setRadius(300);
+    c.setStyle({weight:1});
+  });
+}
 
-  const candidates = allPoints
-    .filter(p => p.free > 0)
-    .map(p => ({...p, dist: distance(pos, p)}))
-    .sort((a,b) => a.dist - b.dist || a.rate - b.rate)
+/* ================= PULSE ================= */
+function pulseCircle(circle,level=1){
+  let grow=true;
+  const base=circle.getRadius();
+  const delta=level===1?80:40;
+
+  const timer=setInterval(()=>{
+    circle.setRadius(grow?base+delta:base);
+    grow=!grow;
+  },500);
+
+  pulseTimers.push(timer);
+}
+
+/* ================= SUGGEST ================= */
+function suggestPoints(pos){
+  clearSuggestEffects();
+
+  const candidates=allPoints
+    .filter(p=>p.free>0)
+    .map(p=>({...p,dist:distance(pos,p)}))
+    .sort((a,b)=>a.dist-b.dist||a.rate-b.rate)
     .slice(0,3);
 
-  candidates.forEach((p, i) => {
-    const c = circles.find(x => x.pointData === p);
-    if (c) {
-      c.setStyle({weight: i === 0 ? 4 : 2});
-      L.polyline([[pos.lat,pos.lng],[p.lat,p.lng]])
-        .addTo(map)
-        .bindTooltip(`${Math.round(p.dist)} m`);
-    }
+  candidates.forEach((p,index)=>{
+    const c=circles.find(x=>x.pointData===p);
+    if(!c) return;
+
+    c.setStyle({weight:index===0?5:3});
+    pulseCircle(c,index===0?1:2);
+
+    const line=L.polyline(
+      [[pos.lat,pos.lng],[p.lat,p.lng]],
+      {dashArray:'5,5'}
+    ).addTo(map)
+     .bindTooltip(
+       `${Math.round(p.dist)} m`,
+       {permanent:true,direction:'center'}
+     );
+
+    suggestLines.push(line);
   });
 }
 
 /* ================= EXPORT ================= */
-function exportUpgradeList() {
-  const rows = allPoints
-    .filter(p => p.rate >= 0.8)
-    .map(p => ({
-      'Tên tập điểm': p.name,
-      Latitude: p.lat,
-      Longitude: p.lng,
-      'Hiệu suất (%)': (p.rate*100).toFixed(1),
-      'Mức ưu tiên': p.rate >= 1 ? 1 : 2
+function exportUpgradeList(){
+  const rows=allPoints
+    .filter(p=>p.rate>=0.8)
+    .map(p=>({
+      'Tên tập điểm':p.name,
+      Latitude:p.lat,
+      Longitude:p.lng,
+      'Hiệu suất (%)':(p.rate*100).toFixed(1),
+      'Mức ưu tiên':p.rate>=1?1:2
     }));
 
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Upgrade');
-  XLSX.writeFile(wb, 'tap_diem_can_nang_cap.csv');
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Upgrade');
+  XLSX.writeFile(wb,'tap_diem_can_nang_cap.csv');
 }
 </script>
-
 </body>
 </html>
