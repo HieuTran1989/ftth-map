@@ -606,7 +606,16 @@ function handleCustomer(lat, lng) {
 
 /* Export danh sách tập điểm cần nâng cấp ra Excel */
 function exportUpgradeList() {
-  const rows = [['Tên', 'Lat', 'Long', 'Hiệu suất (%)', 'Ưu tiên']];
+  const rows = [[
+    'Tên tập điểm',
+    'Lat',
+    'Long',
+    'Dung lượng (Port)',
+    'Port đã dùng',
+    'Port còn lại',
+    'Hiệu suất (%)',
+    'Mức ưu tiên'
+  ]];
 
   allPoints.forEach(p => {
     if (p.eff >= 0.8) {
@@ -614,14 +623,20 @@ function exportUpgradeList() {
         p.name,
         p.lat,
         p.lng,
+        p.maxPort,
+        p.usedPort,
+        p.freePort,
         (p.eff * 100).toFixed(1),
-        p.eff >= 1 ? 'Ưu tiên 1' : 'Ưu tiên 2'
+        p.eff >= 1
+          ? 'Ưu tiên 1 (Full)'
+          : 'Ưu tiên 2 (Gần full)'
       ]);
     }
   });
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Upgrade');
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Upgrade');
   XLSX.writeFile(wb, 'DS_tap_diem_can_nang_cap.xlsx');
 }
 
@@ -813,6 +828,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
