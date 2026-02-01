@@ -413,13 +413,17 @@ function loadData() {
         weight: 2
       });
 
-      // Popup thông tin tập điểm
+      // Popup thông tin tập điểm FTTH
       circle.bindPopup(`
         <b>${data.getValue(i, 2)}</b><br>
-        Dung lượng (Port): ${data.getValue(i, 3)}<br>
-        Đã dùng: ${data.getValue(i, 4)}<br>
-        Còn lại: ${data.getValue(i, 5)}<br>
-        Hiệu suất: ${(eff * 100).toFixed(1)}%
+        <b>Tọa độ:</b>
+        <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">
+          ${lat.toFixed(6)}, ${lng.toFixed(6)}
+        </a><br>
+        <b>Dung lượng:</b> ${data.getValue(i, 3)} Port<br>
+        <b>Đã dùng:</b> ${data.getValue(i, 4)}<br>
+        <b>Còn lại:</b> ${data.getValue(i, 5)}<br>
+        <b>Hiệu suất:</b> ${(eff * 100).toFixed(1)}%
       `);
 
       // Lưu thông tin tập điểm
@@ -544,13 +548,17 @@ function handleCustomer(lat, lng) {
       direction: 'center'
     });
 
-    // Popup chi tiết
+    // Popup chi tiết tập điểm gợi ý quanh vị trí khách hàng
     p.circle.bindPopup(`
       <b>${p.name}</b><br>
-      Dung lượng (Port): ${p.maxPort}<br>
-      Đã dùng: ${p.usedPort}<br>
-      Còn lại: ${p.freePort}<br>
-      Hiệu suất: ${(p.eff * 100).toFixed(1)}%<br>
+      <b>Tọa độ:</b>
+      <a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank">
+        ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}
+      </a><br>
+      <b>Dung lượng (Port):</b> ${p.maxPort}<br>
+      <b>Đã dùng:</b> ${p.usedPort}<br>
+      <b>Còn lại:</b> ${p.freePort}<br>
+      <b>Hiệu suất:</b> ${(p.eff * 100).toFixed(1)}%<br>
       <b>Khoảng cách:</b> ${Math.round(p.dist)} m<br>
       ${i === 0 ? '<b style="color:green">⭐ TẬP ĐIỂM TỐT NHẤT</b>' : ''}
     `);
@@ -772,6 +780,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
