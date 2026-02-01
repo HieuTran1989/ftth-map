@@ -413,13 +413,29 @@ function loadData() {
         weight: 2
       });
 
+      const hasCustomer = customerMarker !== null;
       // Popup thông tin tập điểm FTTH
       circle.bindPopup(`
         <b>${data.getValue(i, 2)}</b><br>
+      
         <b>Tọa độ:</b>
         <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">
           ${lat.toFixed(6)}, ${lng.toFixed(6)}
         </a><br>
+      
+        <b>Dẫn đường:</b>
+        ${
+          hasCustomer
+            ? `<a href="https://www.google.com/maps/dir/?api=1
+                &origin=${customerMarker.getLatLng().lat},${customerMarker.getLatLng().lng}
+                &destination=${lat},${lng}"
+                target="_blank">
+                🧭 Chỉ đường từ vị trí khách hàng
+              </a>`
+            : `<span style="color:#888">Chưa có vị trí khách hàng</span>`
+        }
+        <br>
+      
         <b>Dung lượng:</b> ${data.getValue(i, 3)} Port<br>
         <b>Đã dùng:</b> ${data.getValue(i, 4)}<br>
         <b>Còn lại:</b> ${data.getValue(i, 5)}<br>
@@ -551,15 +567,26 @@ function handleCustomer(lat, lng) {
     // Popup chi tiết tập điểm gợi ý quanh vị trí khách hàng
     p.circle.bindPopup(`
       <b>${p.name}</b><br>
+    
       <b>Tọa độ:</b>
       <a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank">
         ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}
       </a><br>
+    
+      <b>Dẫn đường:</b>
+      <a href="https://www.google.com/maps/dir/?api=1
+        &origin=${customerMarker.getLatLng().lat},${customerMarker.getLatLng().lng}
+        &destination=${p.lat},${p.lng}"
+        target="_blank">
+        🧭 Chỉ đường từ vị trí khách hàng
+      </a><br>
+    
       <b>Dung lượng:</b> ${p.maxPort} Port<br>
       <b>Đã dùng:</b> ${p.usedPort}<br>
       <b>Còn lại:</b> ${p.freePort}<br>
       <b>Hiệu suất:</b> ${(p.eff * 100).toFixed(1)}%<br>
       <b>Khoảng cách:</b> ${Math.round(p.dist)} m<br>
+    
       ${i === 0 ? '<b style="color:green">⭐ TẬP ĐIỂM TỐT NHẤT</b>' : ''}
     `);
 
@@ -780,6 +807,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
