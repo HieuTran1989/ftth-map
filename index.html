@@ -180,6 +180,10 @@
   </div>
 </div>
 
+<button onclick="exportAllCirclesToKML()" style="width:100%; margin-top:6px">
+  Xuất toàn bộ tập điểm (KML)
+</button>
+
   <div class="legend hieusuat">
     <div class="legend-note">Hiệu suất sử dụng tập điểm</div>
     <div>
@@ -263,6 +267,17 @@ function getColor(eff) {
   return 'black';
 }
 
+function colorToKML(color) {
+  const map = {
+    blue:  "7dff0000",
+    green: "7d00ff00",
+    yellow:"7d00ffff",
+    red:   "7d0000ff",
+    black: "7d000000"
+  };
+  return map[color] || "7dffffff";
+}
+
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = d => d * Math.PI / 180;
@@ -272,6 +287,28 @@ function haversine(lat1, lng1, lat2, lng2) {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLng/2)**2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function circleToPolygon(lat, lng, radiusMeters, points = 60) {
+  const coords = [];
+  const earthRadius = 6378137;
+
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI;
+
+    const dx = radiusMeters * Math.cos(angle);
+    const dy = radiusMeters * Math.sin(angle);
+
+    const dLat = dy / earthRadius;
+    const dLng = dx / (earthRadius * Math.cos(lat * Math.PI / 180));
+
+    const latPoint = lat + dLat * 180 / Math.PI;
+    const lngPoint = lng + dLng * 180 / Math.PI;
+
+    coords.push(`${lngPoint},${latPoint},0`);
+  }
+
+  return coords.join(" ");
 }
 
 /* ================= LOAD DATA ================= */
@@ -437,6 +474,75 @@ function exportUpgradeList() {
   XLSX.writeFile(wb, 'DS_tap_diem_can_nang_cap.xlsx');
 }
 
+function exportAllCirclesToKML() {
+  let placemarks = "";
+
+  allPoints.forEach(p => {
+    const polygon = circleToPolygon(p.lat, p.lng, 300);
+    const color = colorToKML(getColor(p.eff));
+
+    const description = `
+      <![CDATA[
+        <b>${p.name}</b><br>
+        Dung lượng: ${p.maxPort}<br>
+        Đã dùng: ${p.usedPort}<br>
+        Còn lại: ${p.freePort}<br>
+        Hiệu suất: ${(p.eff * 100).toFixed(1)}%
+      ]]>
+    `;
+
+    placemarks += `
+      <Placemark>
+        <name>${p.name}</name>
+        <description>${description}</description>
+        <Style>
+          <PolyStyle>
+            <color>${color}</color>
+            <outline>1</outline>
+          </PolyStyle>
+          <LineStyle>
+            <color>ff000000</color>
+            <width>2</width>
+          </LineStyle>
+        </Style>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                ${polygon}
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+    `;
+  });
+
+  const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Vùng phủ GPON MobiFiber</name>
+  ${placemarks}
+</Document>
+</kml>`;
+
+  downloadKML(kml, "Vung_phu_Gpon_MobiFiber.kml");
+}
+
+function downloadKML(content, filename) {
+  const blob = new Blob([content], {
+    type: "application/vnd.google-earth.kml+xml"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
 const input = document.getElementById("searchInput");
 const suggestBox = document.getElementById("suggestBox");
 
@@ -560,6 +666,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
