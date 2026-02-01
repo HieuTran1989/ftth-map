@@ -547,7 +547,7 @@ function handleCustomer(lat, lng) {
     // Popup chi tiết
     p.circle.bindPopup(`
       <b>${p.name}</b><br>
-      Dung lượng: ${p.maxPort}<br>
+      Dung lượng (Port): ${p.maxPort}<br>
       Đã dùng: ${p.usedPort}<br>
       Còn lại: ${p.freePort}<br>
       Hiệu suất: ${(p.eff * 100).toFixed(1)}%<br>
@@ -595,7 +595,7 @@ function exportAllCirclesToKML() {
     const description = `
       <![CDATA[
         <b>${p.name}</b><br>
-        Dung lượng: ${p.maxPort}<br>
+        Dung lượng (Port): ${p.maxPort}<br>
         Đã dùng: ${p.usedPort}<br>
         Còn lại: ${p.freePort}<br>
         Hiệu suất: ${(p.eff * 100).toFixed(1)}%
@@ -772,3 +772,4 @@ function collapseControlBox() {
 
 </body>
 </html>
+
