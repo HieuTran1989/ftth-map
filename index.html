@@ -531,6 +531,21 @@ function handleCustomer(lat, lng) {
   // Marker khách hàng
   customerMarker = L.marker([lat, lng]).addTo(map);
   map.setView([lat, lng], 15);
+  
+  // ===============================
+  // KIỂM TRA PHẠM VI BÁN HÀNG ≤ 1KM
+  // ===============================
+  const nearestPoint = allPoints
+    .map(p => ({ ...p, dist: haversine(lat, lng, p.lat, p.lng) }))
+    .sort((a, b) => a.dist - b.dist)[0];
+  
+  if (!nearestPoint || nearestPoint.dist > 1000) {
+    alert(
+      `❌ Không khả thi để bán FTTH\n` +
+      `Tập điểm gần nhất cách ${Math.round(nearestPoint?.dist || 0)} m`
+    );
+    return;
+  }
 
   // Chọn 3 tập điểm gần nhất còn port trống
   const candidates = allPoints
@@ -798,6 +813,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
