@@ -541,7 +541,7 @@ function handleCustomer(lat, lng) {
   
   if (!nearestPoint || nearestPoint.dist > 1000) {
     alert(
-      `❌ Không khả thi để bán FTTH\n` +
+      `❌ Không khả thi để bán hàng\n` +
       `Tập điểm gần nhất cách ${Math.round(nearestPoint?.dist || 0)} m`
     );
     return;
@@ -813,6 +813,7 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
 
 
