@@ -170,6 +170,24 @@
     .control-box.collapsed > div:not(.panel-title) {
       display: none;
     }
+
+      /* =========================
+       FILTER HIỆU SUẤT THU GỌN
+       ========================= */
+    .filter-box {
+      margin-top: 6px;
+    }
+    
+    .filter-title {
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .filter-content {
+      margin-top: 6px;
+      display: none; /* MẶC ĐỊNH ẨN */
+    }
+        
   </style>
 </head>
 
@@ -194,29 +212,35 @@
     <div id="suggestBox" class="suggest-box"></div>
   </div>
 
-  <!-- Filter theo hiệu suất -->
-<div>
-  <div><b>Filter hiệu suất sử dụng tập điểm</b></div>
+  <!-- Filter theo hiệu suất (thu gọn) -->
+<div class="filter-box">
 
-  <label>
-    <input type="checkbox" class="eff-filter" value="lt20" checked>
-    &lt; 20%
-  </label><br>
+  <div class="filter-title" onclick="toggleFilter()">
+    <b>Filter hiệu suất sử dụng tập điểm</b>
+    <span id="filterArrow" style="float:right">▼</span>
+  </div>
 
-  <label>
-    <input type="checkbox" class="eff-filter" value="20_50" checked>
-    20 – 50%
-  </label><br>
+  <div id="filterContent" class="filter-content">
+    <label>
+      <input type="checkbox" class="eff-filter" value="lt20" checked>
+      &lt; 20%
+    </label><br>
 
-  <label>
-    <input type="checkbox" class="eff-filter" value="50_80" checked>
-    50 – 80%
-  </label><br>
+    <label>
+      <input type="checkbox" class="eff-filter" value="20_50" checked>
+      20 – 50%
+    </label><br>
 
-  <label>
-    <input type="checkbox" class="eff-filter" value="gte80" checked>
-    ≥ 80%
-  </label>
+    <label>
+      <input type="checkbox" class="eff-filter" value="50_80" checked>
+      50 – 80%
+    </label><br>
+
+    <label>
+      <input type="checkbox" class="eff-filter" value="gte80" checked>
+      ≥ 80%
+    </label>
+  </div>
 </div>
 
   <!-- Export danh sách cần nâng cấp -->
@@ -833,6 +857,16 @@ function toggleControl() {
   arrow.textContent = box.classList.contains("collapsed") ? "▼" : "▲";
 }
 
+function toggleFilter() {
+  const content = document.getElementById("filterContent");
+  const arrow = document.getElementById("filterArrow");
+
+  const isOpen = content.style.display === "block";
+
+  content.style.display = isOpen ? "none" : "block";
+  arrow.textContent = isOpen ? "▼" : "▲";
+}
+
 function collapseControlBox() {
   const box = document.getElementById("controlBox");
   const arrow = document.getElementById("arrow");
@@ -850,4 +884,5 @@ function collapseControlBox() {
 
 </body>
 </html>
+
 
