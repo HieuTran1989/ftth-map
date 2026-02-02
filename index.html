@@ -195,16 +195,29 @@
   </div>
 
   <!-- Filter theo hiệu suất -->
-  <div>
-    <div><b>Filter hiệu suất sử dụng tập điểm</b></div>
-    <select id="filterSelect" onchange="applyFilter()" style="width:100%">
-      <option value="all">Tất cả</option>
-      <option value="lt20">&lt; 20%</option>
-      <option value="20_50">20–50%</option>
-      <option value="50_80">50–80%</option>
-      <option value="gte80">&ge; 80%</option>
-    </select>
-  </div>
+<div>
+  <div><b>Filter hiệu suất sử dụng tập điểm</b></div>
+
+  <label>
+    <input type="checkbox" class="eff-filter" value="lt20" checked>
+    &lt; 20%
+  </label><br>
+
+  <label>
+    <input type="checkbox" class="eff-filter" value="20_50" checked>
+    20 – 50%
+  </label><br>
+
+  <label>
+    <input type="checkbox" class="eff-filter" value="50_80" checked>
+    50 – 80%
+  </label><br>
+
+  <label>
+    <input type="checkbox" class="eff-filter" value="gte80" checked>
+    ≥ 80%
+  </label>
+</div>
 
   <!-- Export danh sách cần nâng cấp -->
   <div style="margin-top:6px">
@@ -474,15 +487,20 @@ function renderPoints() {
    ===================================================== */
 
 function applyFilter() {
-  const v = filterSelect.value;
+  // Lấy tất cả checkbox đang được tick
+  const checked = Array.from(
+    document.querySelectorAll('.eff-filter:checked')
+  ).map(cb => cb.value);
 
   allPoints.forEach(p => {
-    let show = true;
+    let show = false;
 
-    if (v === 'lt20') show = p.eff < 0.2;
-    else if (v === '20_50') show = p.eff >= 0.2 && p.eff < 0.5;
-    else if (v === '50_80') show = p.eff >= 0.5 && p.eff < 0.8;
-    else if (v === 'gte80') show = p.eff >= 0.8;
+    checked.forEach(v => {
+      if (v === 'lt20'   && p.eff < 0.2) show = true;
+      if (v === '20_50'  && p.eff >= 0.2 && p.eff < 0.5) show = true;
+      if (v === '50_80'  && p.eff >= 0.5 && p.eff < 0.8) show = true;
+      if (v === 'gte80'  && p.eff >= 0.8) show = true;
+    });
 
     show ? p.circle.addTo(map) : map.removeLayer(p.circle);
   });
@@ -824,7 +842,12 @@ function collapseControlBox() {
     arrow.textContent = "▼";
   }
 }
+
+  document.querySelectorAll('.eff-filter')
+  .forEach(cb => cb.addEventListener('change', applyFilter));
+  
 </script>
 
 </body>
 </html>
+
