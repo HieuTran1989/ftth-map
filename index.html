@@ -1102,12 +1102,14 @@ function locateCustomerInTapDiem(customer) {
 </div>
 <script>
 fetch(
-  "https://script.google.com/macros/s/AKfycbypr-0OMKp6UopO_-cET65QxdwTpeoMV9q13nJMdt3PBR-GtTHkKBrfHsdqTJR24bko/exec" 
-  + encodeURIComponent(location.href)
+  "https://script.google.com/macros/s/AKfycbypr-0OMKp6UopO_-cET65QxdwTpeoMV9q13nJMdt3PBR-GtTHkKBrfHsdqTJR24bko/exec"
+  + "?url=" + encodeURIComponent(location.href),
+  { mode: "no-cors" }
 );
 </script>
 </body>
 </html>
+
 
 
 
