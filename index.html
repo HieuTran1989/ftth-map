@@ -497,7 +497,7 @@ function showCustomer(tapDiemName) {
    LOAD DỮ LIỆU GOOGLE SHEET
    ===================================================== */
 
-google.charts.load('current');
+google.charts.load('current', { packages: ['corechart'] });
 google.charts.setOnLoadCallback(() => {
   loadData();
   loadCustomerData();
@@ -1124,5 +1124,6 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
