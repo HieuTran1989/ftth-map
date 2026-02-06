@@ -223,16 +223,18 @@
     <span id="arrow" onclick="toggleControl()" style="float:right; cursor:pointer">▲</span>
   </div>
 
-    <!-- Ô nhập tìm kiếm -->
+    <!-- Ô nhập vị trí khách hàng: gõ tọa độ / địa chỉ hoặc tự động fill khi double-click trên bản đồ -->
     <div class="search-row" style="position:relative">
       <input id="searchInput" placeholder="Dbl-click on map/gõ tọa độ, địa chỉ">
       <button onclick="searchLocation()">Tìm</button>
+      <!-- Hộp gợi ý địa chỉ từ dịch vụ Nominatim -->
       <div id="suggestBox" class="suggest-box"></div>
     </div>
     
     <!-- Ô tìm kiếm KHÁCH HÀNG -->
     <div class="search-row" style="position:relative">
       <input id="customerSearchInput" placeholder="Tìm KH đã bán (gõ tên - địa chỉ)">
+      <!-- Hộp gợi ý khách hàng đã bán (lọc theo tập điểm đang hiển thị) -->
       <div id="customerSuggestBox" class="suggest-box"></div>
     </div>
 
@@ -484,6 +486,7 @@ function renderCustomerList(tapDiemName) {
   return html;
 }
 
+// Hiển thị danh sách khách hàng trong popup tập điểm
 function showCustomer(tapDiemName) {
   const el = document.getElementById(`customer-${tapDiemName}`);
   if (!el) return;
@@ -515,7 +518,9 @@ function loadData() {
     }
     const data = res.getDataTable();
 
-    // Duyệt từng dòng dữ liệu
+    // Mapping cột Sheet "Danh sách tập điểm S2":
+    // [2] Tên tập điểm | [3] Tổng port | [4] Port đã dùng
+    // [5] Port còn lại | [7] Hiệu suất | [9][10] Tọa độ
     for (let i = 0; i < data.getNumberOfRows(); i++) {
       const lat = Number(data.getValue(i, 9));
       const lng = Number(data.getValue(i, 10));
@@ -697,7 +702,13 @@ function searchLocation() {
 /* =====================================================
    XỬ LÝ LOGIC KHÁCH HÀNG & GỢI Ý TẬP ĐIỂM
    ===================================================== */
-
+/*
+Xử lý khi xác định vị trí khách hàng:
+- Reset marker & highlight cũ
+- Kiểm tra phạm vi bán hàng ≤ 1km
+- Chọn tối đa 3 tập điểm gần nhất còn port
+- Highlight, vẽ đường và hiển thị gợi ý
+*/
 function handleCustomer(lat, lng) {
   // Xóa marker & layer cũ
   if (customerMarker) map.removeLayer(customerMarker);
@@ -893,6 +904,7 @@ const input = document.getElementById("searchInput");
 const suggestBox = document.getElementById("suggestBox");
 const customerInput = document.getElementById("customerSearchInput");
 const customerSuggestBox = document.getElementById("customerSuggestBox");
+// Timer debounce autocomplete để tránh gọi API liên tục
 let suggestTimer = null;
 
 /* Autocomplete địa chỉ */
@@ -986,6 +998,7 @@ document.addEventListener("click", e => {
 
 /* Định vị người dùng */
 let myLocationMarker = null;
+// Vòng tròn thể hiện sai số định vị (accuracy)
 let myAccuracyCircle = null;
 
 function locateMe() {
@@ -1110,12 +1123,3 @@ fetch(
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
