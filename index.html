@@ -1138,7 +1138,7 @@ function collapseControlBox() {
   .forEach(cb => cb.addEventListener('change', applyFilter));
 
 function locateCustomerInTapDiem(customer) {
-  customerLatLng = null;
+  // customerLatLng = null;
   const p = allPoints.find(tp => tp.name === customer.tapDiem);
   if (!p) {
     alert("Không tìm thấy tập điểm của khách hàng");
@@ -1207,6 +1207,7 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
 
