@@ -336,6 +336,9 @@ let customerSearchList = [];
 // Marker vị trí khách hàng
 let customerMarker = null;
 
+// Tọa độ khách hàng hiện tại (null = chưa có)
+let customerLatLng = null;
+
 // Các layer gợi ý (line, highlight)
 let suggestionLayers = [];
 
@@ -547,10 +550,7 @@ function loadData() {
         </a><br>
       
         <b>Dẫn đường:</b>
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}"
-           target="_blank">
-          🧭 Mở chỉ đường trên Google Maps
-        </a><br>
+        ${renderDirection(lat, lng)}<br>
       
         <b>Dung lượng:</b> ${data.getValue(i, 3)} Port<br>
         <b>Đã dùng:</b> ${data.getValue(i, 4)}<br>
@@ -710,6 +710,7 @@ Xử lý khi xác định vị trí khách hàng:
 - Highlight, vẽ đường và hiển thị gợi ý
 */
 function handleCustomer(lat, lng) {
+  customerLatLng = { lat, lng };
   // Xóa marker & layer cũ
   if (customerMarker) map.removeLayer(customerMarker);
   suggestionLayers.forEach(l => map.removeLayer(l));
@@ -1108,7 +1109,22 @@ function locateCustomerInTapDiem(customer) {
     });
   }, 300);
 }
-  
+
+function renderDirection(lat, lng) {
+  if (!customerLatLng) {
+    return `<i style="color:#999">Chưa lấy được vị trí khách hàng</i>`;
+  }
+
+  return `
+    <a href="https://www.google.com/maps/dir/?api=1
+      &origin=${customerLatLng.lat},${customerLatLng.lng}
+      &destination=${lat},${lng}"
+      target="_blank">
+      🧭 Mở chỉ đường trên Google Maps
+    </a>
+  `;
+}
+
 </script>
 <!-- LOGO GÓC TRÁI DƯỚI -->
 <div class="branding">
@@ -1124,6 +1140,7 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
 
