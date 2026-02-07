@@ -207,7 +207,16 @@
     
       pointer-events: none;
     }
-        
+
+    /* =========================
+       CHIỀU RỘNG POPUP LEAFLET
+       ========================= */
+    .leaflet-popup-content {
+      min-width: 400px;
+      max-width: min(550px, 92vw);
+      font-size: 13px;
+    }
+
   </style>
 </head>
 
@@ -1166,6 +1175,7 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
 
