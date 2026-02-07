@@ -1138,11 +1138,13 @@ function renderDirection(lat, lng) {
     return `<i style="color:#999">Chưa lấy được vị trí khách hàng</i>`;
   }
 
+  const url =
+    `https://www.google.com/maps/dir/?api=1` +
+    `&origin=${customerLatLng.lat},${customerLatLng.lng}` +
+    `&destination=${lat},${lng}`;
+
   return `
-    <a href="https://www.google.com/maps/dir/?api=1
-      &origin=${customerLatLng.lat},${customerLatLng.lng}
-      &destination=${lat},${lng}"
-      target="_blank">
+    <a href="${url}" target="_blank" rel="noopener">
       🧭 Mở chỉ đường trên Google Maps
     </a>
   `;
@@ -1163,6 +1165,7 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
 
