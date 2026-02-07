@@ -1143,11 +1143,12 @@ function renderDirection(lat, lng) {
     `&origin=${customerLatLng.lat},${customerLatLng.lng}` +
     `&destination=${lat},${lng}`;
 
-    return `
-      <a href="${url}" target="_blank" rel="noopener" class="direction-link">
-        🧭 Mở chỉ đường trên Google Maps
-      </a>
-    `;
+  return `
+    <a href="${url}" target="_blank" rel="noopener">
+      🧭 Chỉ đường trên Google Maps
+    </a>
+  `;
+
 }
 
 </script>
@@ -1165,6 +1166,7 @@ fetch(
 </script>
 </body>
 </html>
+
 
 
 
