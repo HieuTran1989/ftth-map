@@ -231,7 +231,7 @@
       <div id="suggestBox" class="suggest-box"></div>
     </div>
     
-    <!-- Ô tìm kiếm KHÁCH HÀNG -->
+    <!-- Ô tìm kiếm khách hàng đã bán -->
     <div class="search-row" style="position:relative">
       <input id="customerSearchInput" placeholder="Tìm KH đã bán (gõ tên - địa chỉ)">
       <!-- Hộp gợi ý khách hàng đã bán (lọc theo tập điểm đang hiển thị) -->
@@ -523,7 +523,7 @@ function loadData() {
   );
 
   query.send(res => {
-    // ✅ KIỂM TRA LỖI GOOGLE SHEET
+    // KIỂM TRA LỖI GOOGLE SHEET
     if (res.isError()) {
       alert("❌ Không đọc được dữ liệu Google Sheet (Danh sách tập điểm)");
       console.error("Google Sheet error:", res.getMessage(), res.getDetailedMessage());
@@ -614,7 +614,7 @@ function loadCustomerData() {
   );
 
   query.send(res => {
-    // ✅ KIỂM TRA LỖI GOOGLE SHEET
+    // KIỂM TRA LỖI GOOGLE SHEET
     if (res.isError()) {
       alert("❌ Không đọc được dữ liệu Google Sheet (Danh sách tập điểm)");
       console.error("Google Sheet error:", res.getMessage(), res.getDetailedMessage());
@@ -671,7 +671,7 @@ function renderPoints() {
     bounds.push([p.lat, p.lng]);
   });
 
-  // Zoom bao toàn bộ tập điểm ở lần load đầu
+  // Zoom toàn bộ tập điểm ở lần load đầu
   if (isInitialLoad && bounds.length) {
     map.fitBounds(bounds, { padding: [40, 40] });
     isInitialLoad = false;
@@ -698,7 +698,7 @@ function updateEffCounts() {
     else counts.gte100++;
   });
 
-  // 🔹 CẬP NHẬT SỐ LƯỢNG TỪNG NHÓM
+  // CẬP NHẬT SỐ LƯỢNG TỪNG NHÓM
   document.getElementById("cnt-lt20").textContent     = counts.lt20;
   document.getElementById("cnt-20_50").textContent   = counts['20_50'];
   document.getElementById("cnt-50_80").textContent   = counts['50_80'];
@@ -1140,7 +1140,7 @@ function collapseControlBox() {
   document.querySelectorAll('.eff-filter')
   .forEach(cb => cb.addEventListener('change', applyFilter));
 
-// Xác định và zoom tới tập điểm mà khách hàng đang đấu nối để ứng cứu nhanh
+// Xác định và zoom tới tập điểm mà khách hàng đang đấu nối
 function locateCustomerInTapDiem(customer) {
   // customerLatLng = null;
   const p = allPoints.find(tp => tp.name === customer.tapDiem);
@@ -1213,11 +1213,6 @@ fetch(
 </script>
 </body>
 </html>
-
-
-
-
-
 
 
 
